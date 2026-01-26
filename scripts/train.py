@@ -1,10 +1,11 @@
-import torch
+import torch 
 import torch.nn as nn
 from models.base_models import TextClassifier 
 import scripts.data_loader as dl
 from sklearn.metrics import accuracy_score
 import numpy as np
-
+from models.base_models import TextClassifier, ImageClassifier 
+ 
 #核心函数 
 def train_and_validate(model, train_loader, val_loader, model_type='Text'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,29 +23,39 @@ def train_and_validate(model, train_loader, val_loader, model_type='Text'):
         model.train()
         total_loss = 0
          
-        for text_f, labels in train_loader: 
-            text_f, labels = text_f.to(device), labels.to(device)
+        for text_f, image_in, labels in train_loader: 
+             
+            text_f, image_in, labels = text_f.to(device), image_in.to(device), labels.to(device)
             
             optimizer.zero_grad()
-            
-            #Text逻辑 
-            outputs = model(text_f)
+             
+            if model_type == 'Text':
+                outputs = model(text_f)  
+            elif model_type == 'Image':
+                outputs = model(image_in)  
+            else: 
+                raise ValueError(f"Unknown model type: {model_type}")
 
             loss = criterion(outputs, labels)
             total_loss += loss.item()
             
             loss.backward()
             optimizer.step()
-        
         # 验证阶段
         model.eval()
         all_preds = []
         all_labels = []
         with torch.no_grad():
-            for text_f, labels in val_loader: 
-                text_f, labels = text_f.to(device), labels.to(device)
+            for text_f, image_in, labels in val_loader: 
                 
-                outputs = model(text_f)
+                text_f, image_in, labels = text_f.to(device), image_in.to(device), labels.to(device)
+                
+                if model_type == 'Text':
+                    outputs = model(text_f)
+                elif model_type == 'Image':  
+                    outputs = model(image_in)
+                else:
+                    raise ValueError(f"Unknown model type: {model_type}")
 
                 preds = torch.argmax(outputs, dim=1)
                 all_preds.extend(preds.cpu().numpy())
@@ -68,4 +79,8 @@ if __name__ == '__main__':
     print("\n--- Running Text Baseline (Ablation A) ---")
     text_model = TextClassifier() 
     train_and_validate(text_model, train_loader, val_loader, model_type='Text')
-     
+    #2. 图像基线 
+    print("\n--- Running Image Baseline (Ablation B) ---")
+    image_model = ImageClassifier()
+    train_and_validate(image_model, train_loader, val_loader, model_type='Image')
+ 
