@@ -5,7 +5,7 @@ import scripts.data_loader as dl
 from sklearn.metrics import accuracy_score
 import numpy as np
 from models.base_models import TextClassifier, ImageClassifier 
- 
+from models.base_models import TextClassifier, ImageClassifier, EarlyFusionClassifier
 #核心函数 
 def train_and_validate(model, train_loader, val_loader, model_type='Text'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,12 +16,19 @@ def train_and_validate(model, train_loader, val_loader, model_type='Text'):
     
     best_acc = 0.0
     num_epochs = 10 
+    image_extractor = None
+    if model_type == 'EarlyFusion':
+         
+        temp_img_model = ImageClassifier()  
+         
+        image_extractor = temp_img_model.resnet 
+        image_extractor.eval()
+        image_extractor.to(device)
     
-    print(f"Starting training for {model_type} Model on {device}...")
-
     for epoch in range(num_epochs):
         model.train()
-        total_loss = 0
+        total_loss = 0 
+         
          
         for text_f, image_in, labels in train_loader: 
              
@@ -32,7 +39,11 @@ def train_and_validate(model, train_loader, val_loader, model_type='Text'):
             if model_type == 'Text':
                 outputs = model(text_f)  
             elif model_type == 'Image':
-                outputs = model(image_in)  
+                outputs = model(image_in)
+            elif model_type == 'EarlyFusion':  
+                with torch.no_grad():  
+                    image_features_4D = image_extractor(image_in) 
+                outputs = model(text_f, image_features_4D)  
             else: 
                 raise ValueError(f"Unknown model type: {model_type}")
 
@@ -54,6 +65,10 @@ def train_and_validate(model, train_loader, val_loader, model_type='Text'):
                     outputs = model(text_f)
                 elif model_type == 'Image':  
                     outputs = model(image_in)
+                elif model_type == 'EarlyFusion':  
+                    image_features_2D = image_extractor(image_in) 
+             
+                    outputs = model(text_f, image_features_2D)
                 else:
                     raise ValueError(f"Unknown model type: {model_type}")
 
@@ -75,12 +90,8 @@ def train_and_validate(model, train_loader, val_loader, model_type='Text'):
 if __name__ == '__main__':
     train_loader, val_loader = dl.get_train_val_loaders()
 
-    #1. 文本基线
-    print("\n--- Running Text Baseline (Ablation A) ---")
-    text_model = TextClassifier() 
-    train_and_validate(text_model, train_loader, val_loader, model_type='Text')
-    #2. 图像基线 
-    print("\n--- Running Image Baseline (Ablation B) ---")
-    image_model = ImageClassifier()
-    train_and_validate(image_model, train_loader, val_loader, model_type='Image')
- 
+     
+     #3. 早期融合基线 
+    print("\n--- Running Early Fusion Baseline (Ablation C) ---")
+    early_fusion_model = EarlyFusionClassifier()
+    train_and_validate(early_fusion_model, train_loader, val_loader, model_type='EarlyFusion')

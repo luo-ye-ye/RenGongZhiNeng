@@ -1,6 +1,6 @@
 import torch.nn as nn
 from torchvision import models 
- 
+import torch
 TEXT_FEATURE_DIM = 768
 IMAGE_FEATURE_DIM = 512  
 NUM_CLASSES = 3 
@@ -40,4 +40,25 @@ class ImageClassifier(nn.Module):
     def forward(self, image_input): 
         features = self.resnet(image_input)
         return self.classifier(features)
+# 3. 早期融合模型 
+class EarlyFusionClassifier(nn.Module):  
+    def __init__(self, text_feature_dim=TEXT_FEATURE_DIM, 
+                 image_feature_dim=IMAGE_FEATURE_DIM, 
+                 num_classes=NUM_CLASSES):
+        super().__init__()
         
+        fused_dim = text_feature_dim + image_feature_dim  
+        
+        self.fused_classifier = nn.Sequential(
+            nn.Linear(fused_dim, 512),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(256, num_classes)
+        )
+
+    def forward(self, text_features, image_features): 
+        fused_features = torch.cat((text_features, image_features), dim=1) 
+        return self.fused_classifier(fused_features)        
