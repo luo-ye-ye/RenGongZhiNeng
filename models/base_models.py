@@ -155,3 +155,83 @@ class TransformerFusionClassifier(nn.Module):
         fused_vector = torch.cat((text_fused_feature, image_fused_feature), dim=1) 
         
         return self.classifier(fused_vector)
+#堆叠多层交叉注意力
+class FusionEncoder(nn.Module): 
+    def __init__(self, d_model=768, num_layers=2, nhead=8, dropout=0.1):
+        super().__init__()
+        self.num_layers = num_layers
+        
+        # 堆叠num_layers个双向交叉注意力层
+        self.encoder_layers = nn.ModuleList([
+            nn.ModuleDict({
+                'text_to_image': CrossAttentionBlock(d_model, nhead, dropout),  
+                'image_to_text': CrossAttentionBlock(d_model, nhead, dropout)  
+            })
+            for _ in range(num_layers)
+        ])
+
+    def forward(self, text_features, image_features):
+         
+        for layer in self.encoder_layers:
+            #文本增强 
+            new_text_features = layer['image_to_text'](
+                target=text_features, 
+                source=image_features
+            )
+            
+            #图像增强  
+            new_image_features = layer['text_to_image'](
+                target=image_features, 
+                source=text_features
+            )
+             
+            text_features = new_text_features
+            image_features = new_image_features
+            
+        return text_features, image_features
+
+ 
+#多模态Transformer融合分类器pro 
+class TransformerFusionClassifierpro(nn.Module):
+    def __init__(self, num_classes=NUM_CLASSES, 
+                 text_model_name='bert-base-chinese', 
+                 img_feature_dim=IMAGE_FEATURE_DIM,
+                 num_fusion_layers=4): #核心变化 
+        super().__init__()
+         
+        self.bert_encoder = AutoModel.from_pretrained(text_model_name)
+        bert_output_dim = self.bert_encoder.config.hidden_size # 768
+         
+        self.resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1) 
+        self.resnet = nn.Sequential(*(list(self.resnet.children())[:-2]))  
+        self.image_proj = nn.Linear(512, bert_output_dim) 
+ 
+        self.fusion_encoder = FusionEncoder(d_model=bert_output_dim, num_layers=num_fusion_layers) 
+         
+        self.classifier = nn.Sequential(
+            nn.Linear(bert_output_dim * 2, 512),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512, num_classes)
+        )
+
+    def forward(self, input_ids, attention_mask, image_input):
+         
+        text_outputs = self.bert_encoder(input_ids=input_ids, attention_mask=attention_mask)
+        text_features = text_outputs.last_hidden_state 
+         
+        image_grid_features = self.resnet(image_input) 
+        image_features = image_grid_features.flatten(2).transpose(1, 2)
+        image_features = self.image_proj(image_features)
+ 
+        enhanced_text_features, enhanced_image_features = self.fusion_encoder(
+            text_features=text_features, 
+            image_features=image_features
+        )
+         
+        text_fused_feature = enhanced_text_features[:, 0, :]  
+        image_fused_feature = torch.mean(enhanced_image_features, dim=1) 
+        
+        fused_vector = torch.cat((text_fused_feature, image_fused_feature), dim=1) 
+        
+        return self.classifier(fused_vector)

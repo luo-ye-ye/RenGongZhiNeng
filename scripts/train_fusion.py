@@ -7,6 +7,7 @@ import sys
 import scripts.data_loader_fusion as dlf 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..')) 
 from models.base_models import TransformerFusionClassifier  
+from models.base_models import TransformerFusionClassifierpro
 import scripts.data_loader  as dl
 DEVICE = dl.DEVICE 
 NUM_EPOCHS = 10
@@ -75,6 +76,10 @@ if __name__ == '__main__':
     
     print("\n--- Running Transformer Cross-Attention Fusion Model ---")
      
-    fusion_model = TransformerFusionClassifier() 
+    #fusion_model = TransformerFusionClassifier() 
+     
+    #train_and_validate_fusion(fusion_model, train_loader, val_loader)
+     
+    fusion_model = TransformerFusionClassifierpro() 
      
     train_and_validate_fusion(fusion_model, train_loader, val_loader)
