@@ -76,10 +76,10 @@ if __name__ == '__main__':
     
     print("\n--- Running Transformer Cross-Attention Fusion Model ---")
      
-    #fusion_model = TransformerFusionClassifier() 
-     
-    #train_and_validate_fusion(fusion_model, train_loader, val_loader)
-     
-    fusion_model = TransformerFusionClassifierpro() 
+    fusion_model = TransformerFusionClassifier() 
      
     train_and_validate_fusion(fusion_model, train_loader, val_loader)
+     
+    #fusion_model = TransformerFusionClassifierpro() 
+     
+    #train_and_validate_fusion(fusion_model, train_loader, val_loader)

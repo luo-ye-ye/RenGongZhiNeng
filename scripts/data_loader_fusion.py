@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 from PIL import Image 
 from torchvision import transforms   
 #model
-MODEL_NAME = 'bert-base-chinese'  
+MODEL_NAME =  'hfl/chinese-roberta-wwm-ext' 
 MAX_SEQ_LENGTH = 128
 IMAGE_MEAN = [0.485, 0.456, 0.406] 
 IMAGE_STD = [0.229, 0.224, 0.225]
