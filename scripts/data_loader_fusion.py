@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from transformers import AutoTokenizer  
 from PIL import Image 
 from torchvision import transforms   
- 
+#model
 MODEL_NAME = 'bert-base-chinese'  
 MAX_SEQ_LENGTH = 128
 IMAGE_MEAN = [0.485, 0.456, 0.406] 
