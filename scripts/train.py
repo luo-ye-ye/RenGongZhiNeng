@@ -94,9 +94,28 @@ def train_and_validate(model, train_loader, val_loader, model_type='Text'):
 # 主运行逻辑
 if __name__ == '__main__':
     train_loader, val_loader = dl.get_train_val_loaders()
-
+   #文本基线
+    text_model = TextClassifier()
+     
+    text_acc = train_and_validate(
+        text_model, 
+        train_loader, 
+        val_loader, 
+        model_type='Text'
+    )
+    #图像基线
+    image_model = ImageClassifier()
+    
+    
+    image_acc = train_and_validate(
+        image_model, 
+        train_loader, 
+        val_loader, 
+        model_type='Image'
+    )
      
      #3. 早期融合基线 
     print("\n--- Running Early Fusion Baseline (Ablation C) ---")
     early_fusion_model = EarlyFusionClassifier()
+
     train_and_validate(early_fusion_model, train_loader, val_loader, model_type='EarlyFusion')
