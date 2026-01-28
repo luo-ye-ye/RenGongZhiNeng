@@ -71,8 +71,7 @@ class MultimodalDataset(Dataset):
          
         with torch.no_grad():
             inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
-            
-            # 或者更安全地，直接在调用模型时处理
+             
             outputs = BERT_ENCODER(
                 input_ids=inputs['input_ids'].to(DEVICE), 
                 attention_mask=inputs['attention_mask'].to(DEVICE)
