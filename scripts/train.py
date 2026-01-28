@@ -68,6 +68,11 @@ def train_and_validate(model, train_loader, val_loader, model_type='Text'):
                 elif model_type == 'EarlyFusion':  
                     image_features_2D = image_extractor(image_in) 
              
+                    
+                    
+                    
+                    
+                    
                     outputs = model(text_f, image_features_2D)
                 else:
                     raise ValueError(f"Unknown model type: {model_type}")
