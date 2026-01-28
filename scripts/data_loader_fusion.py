@@ -109,7 +109,7 @@ class MultimodalDatasetFusion(Dataset):
         else: 
             return input_ids, attention_mask, image_data, guid
  
-def get_train_val_loaders(batch_size=32, val_split=0.1):  
+def get_train_val_loaders(batch_size=16, val_split=0.1):  
     df = pd.read_csv(os.path.join(TRAIN_FILE), sep=',', header=0 , dtype={'guid': str, 'tag': str})
      
     train_guids, val_guids, train_tags, val_tags = train_test_split(

@@ -157,7 +157,7 @@ class TransformerFusionClassifier(nn.Module):
         return self.classifier(fused_vector)
 #堆叠多层交叉注意力
 class FusionEncoder(nn.Module): 
-    def __init__(self, d_model=768, num_layers=2, nhead=8, dropout=0.1):
+    def __init__(self, d_model=768, num_layers=2, nhead=8, dropout=0.2):
         super().__init__()
         self.num_layers = num_layers
         
@@ -202,9 +202,10 @@ class TransformerFusionClassifierpro(nn.Module):
         self.bert_encoder = AutoModel.from_pretrained(text_model_name)
         bert_output_dim = self.bert_encoder.config.hidden_size # 768
          
-        self.resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1) 
-        self.resnet = nn.Sequential(*(list(self.resnet.children())[:-2]))  
-        self.image_proj = nn.Linear(512, bert_output_dim) 
+        self.resnet = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        self.resnet = nn.Sequential(*(list(self.resnet.children())[:-2])) 
+ 
+        self.image_proj = nn.Linear(2048, bert_output_dim)
  
         self.fusion_encoder = FusionEncoder(d_model=bert_output_dim, num_layers=num_fusion_layers) 
          
