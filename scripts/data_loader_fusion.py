@@ -11,27 +11,34 @@ MODEL_NAME =  'hfl/chinese-roberta-wwm-ext'
 MAX_SEQ_LENGTH = 128
 IMAGE_MEAN = [0.485, 0.456, 0.406] 
 IMAGE_STD = [0.229, 0.224, 0.225]
-#Êı¾İ¼¯Â·¾¶³£Á¿ 
+#æ•°æ®é›†è·¯å¾„å¸¸é‡ 
 DATA_DIR = 'data'
 TRAIN_FILE = 'train.txt'
 LABEL_MAP = {'positive': 0, 'neutral': 1, 'negative': 2}
-#Í¼Ïñ´¦Àí
-IMAGE_TRANSFORMS = transforms.Compose([ 
-    transforms.Resize((224, 224)),       
-    transforms.ToTensor(),             
-    transforms.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD)  
-])  
+#å›¾åƒå¤„ç†
+TRAIN_IMAGE_TRANSFORMS = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.RandomHorizontalFlip(),      #éšæœºæ°´å¹³ç¿»è½¬
+    transforms.ColorJitter(brightness=0.1, contrast=0.1), #éšæœºæ”¹å˜äº®åº¦å¯¹æ¯”åº¦
+    transforms.ToTensor(),
+    transforms.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD)
+])
+
+VAL_IMAGE_TRANSFORMS = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD)
+])
 
 try:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #Ö»¼ÓÔØTokenizer 
+    #åªåŠ è½½Tokenizer 
     TOKENIZER = AutoTokenizer.from_pretrained(MODEL_NAME) 
 except Exception as e:
     print(f"Warning: Failed to load Tokenizer. Please ensure 'transformers' is installed. Error: {e}")
     TOKENIZER = None
-
  
-#Êı¾İ¼¯ 
+#æ•°æ®é›† 
 class MultimodalDatasetFusion(Dataset):   
     def __init__(self, guids, labels=None, is_train=True):
         self.guids = guids
@@ -39,7 +46,7 @@ class MultimodalDatasetFusion(Dataset):
         self.is_train = is_train
         if TOKENIZER is None:
              raise RuntimeError("Tokenizer failed to load. Cannot proceed with data loading.")
-
+        self.image_transform = TRAIN_IMAGE_TRANSFORMS if is_train else VAL_IMAGE_TRANSFORMS
     def _get_raw_text(self, guid):  
         text_path = os.path.join(DATA_DIR, f"{guid}.txt")
         raw_text = ""
@@ -48,10 +55,10 @@ class MultimodalDatasetFusion(Dataset):
              raise FileNotFoundError(f"Required data file not found: {text_path}")
          
         try:
-            with open(text_path, 'r', encoding='gb18030') as f: 
+            with open(text_path, 'r', encoding='GB18030') as f: 
                 raw_text = f.read().strip()
         except UnicodeDecodeError:  
-            with open(text_path, 'r', encoding='CP866') as f:
+            with open(text_path, 'r', encoding='cp866') as f:
                 raw_text = f.read().strip()
         except Exception as e: 
             print(f"An unexpected error occurred while reading {text_path}: {e}")
@@ -77,7 +84,7 @@ class MultimodalDatasetFusion(Dataset):
               
         image = Image.open(image_path).convert('RGB')
          
-        image_tensor = IMAGE_TRANSFORMS(image)
+        image_tensor = self.image_transform(image)
         
         return image_tensor
         
@@ -87,11 +94,11 @@ class MultimodalDatasetFusion(Dataset):
     def __getitem__(self, idx): 
         guid = self.guids[idx]
         
-        #ÎÄ±¾´¦Àí 
+        #æ–‡æœ¬å¤„ç† 
         raw_text = self._get_raw_text(guid)
         input_ids, attention_mask = self._get_text_tokens(raw_text)
         
-        #Í¼Ïñ´¦Àí 
+        #å›¾åƒå¤„ç† 
         image_data = self._get_image_input(guid)
         
         if self.is_train:
@@ -119,4 +126,16 @@ def get_train_val_loaders(batch_size=32, val_split=0.1):
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     
     return train_loader, val_loader
- 
+
+
+TEST_FILE = 'test_without_label.txt'  
+
+def get_test_loader(batch_size=32): 
+    test_df = pd.read_csv(os.path.join(TEST_FILE), sep=',', header=0 , dtype={'guid': str, 'tag': str})
+    test_guids = test_df['guid'].tolist()
+     
+    test_dataset = MultimodalDatasetFusion(test_guids, labels=None, is_train=False)
+     
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False) 
+    
+    return test_loader, test_guids  

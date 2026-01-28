@@ -196,7 +196,7 @@ class TransformerFusionClassifierpro(nn.Module):
     def __init__(self, num_classes=NUM_CLASSES, 
                  text_model_name='bert-base-chinese', 
                  img_feature_dim=IMAGE_FEATURE_DIM,
-                 num_fusion_layers=4): #核心变化 
+                 num_fusion_layers=2): #核心变化 
         super().__init__()
          
         self.bert_encoder = AutoModel.from_pretrained(text_model_name)
