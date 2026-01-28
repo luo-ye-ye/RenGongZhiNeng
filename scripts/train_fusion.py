@@ -39,17 +39,14 @@ def train_and_validate_fusion(model, train_loader, val_loader):
             image_in = image_in.to(DEVICE)
             labels = labels.to(DEVICE)
             
-            optimizer.zero_grad()
-            #ǰ�򴫲� 
+            optimizer.zero_grad() 
             outputs = model(input_ids, attention_mask, image_in) 
 
             loss = criterion(outputs, labels)
-            total_loss += loss.item()
-            #���򴫲� 
+            total_loss += loss.item() 
             loss.backward()
             optimizer.step()
-            
-        #��֤
+             
         model.eval()
         all_preds = []
         all_labels = []
@@ -83,8 +80,7 @@ def train_and_validate_fusion(model, train_loader, val_loader):
 def predict_and_generate_file(model, test_loader, guids, output_file='test_results.txt', checkpoint_path='models/best_model.pth'):
  
     model.to(DEVICE)
-    
-    #�������ģ��Ȩ��
+     
     try:
         model.load_state_dict(torch.load(checkpoint_path, map_location=DEVICE))
         print(f"Successfully loaded best model weights from {checkpoint_path}")
@@ -134,8 +130,8 @@ if __name__ == '__main__':
     fusion_model = TransformerFusionClassifierpro() 
      
     train_and_validate_fusion(fusion_model, train_loader, val_loader)
-
-    #Ԥ��
+ 
+    '''
     fusion_model_best = TransformerFusionClassifierpro( num_classes=NUM_CLASSES,num_fusion_layers=2, text_model_name='hfl/chinese-roberta-wwm-ext')
      
     test_loader, test_guids = dlf.get_test_loader()
@@ -147,3 +143,4 @@ if __name__ == '__main__':
         output_file='shiyanjieguo.txt', 
         checkpoint_path='models/best_roberta_fusion.pth' 
     )
+    '''
