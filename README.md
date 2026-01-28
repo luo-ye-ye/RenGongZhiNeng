@@ -8,11 +8,11 @@
 
 1.  **深度融合架构：** 采用 2 层 **Transformer 交叉注意力** 模块实现序列级的双向深度语义对齐。
 2.  **骨干网络升级：** 将编码器升级至 **RoBERTa-wwm-ext** (Text) + **ResNet50** (Image)，保障了高质量的特征输入。
-3.  **SOTA 训练策略：** 引入 **分层学习率** ($1\text{e}-5$ vs $5\text{e}-4$)、**Warmup 调度器** 和 **强正则化**（Dropout, Label Smoothing），解决了高参数量模型在小数据集上的过拟合和训练稳定性问题。
+3.  **SOTA 训练策略：** 引入 **分层学习率** ($1\text{e}-5$ vs $5\text{e}-4$)、**Warmup 调度器** 和 **强正则化**，解决了高参数量模型在小数据集上的过拟合和训练稳定性问题。
 
 ## 2. 环境配置与依赖
 
-本项目基于 PyTorch 实现，并依赖 HuggingFace Transformers 库。请确保您的环境安装了 NVIDIA 驱动和 CUDA。
+本项目基于PyTorch实现，并依赖HuggingFace Transformers库。请确保环境安装了NVIDIA 驱动和CUDA。
 
 ### 2.1 依赖安装
 
@@ -46,7 +46,7 @@ master
 └── README.md                
 ```
 
-## 4. 执行你代码的完整流程
+## 4. 执行代码的完整流程
 
 ### 步骤 1：数据准备
 
